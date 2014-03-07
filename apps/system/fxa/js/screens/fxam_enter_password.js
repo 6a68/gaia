@@ -52,6 +52,8 @@ var FxaModuleEnterPassword = (function() {
   function _forgotPassword() {
     /*jshint validthis:true*/
     var self = this;
+    console.error('FtuLauncher: ' + FtuLauncher);
+    console.error('FtuLauncher.isFtuRunning(): ' + FtuLauncher.isFtuRunning());
     if (FtuLauncher.isFtuRunning()) {
       return self.showErrorResponse({
         error: 'RESET_PASSWORD_IN_SETTINGS'

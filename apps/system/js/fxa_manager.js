@@ -89,6 +89,7 @@ var FxAccountsManager = {
           });
         })(methodName);
         break;
+      // XXX todo figure out how to pass a third callerApp parameter here
       case 'openFlow':
         (function(methodName) {
           FxAccountsUI.login(function(data) {
@@ -131,6 +132,7 @@ var FxAccountsManager = {
     var message = event.detail;
 
     switch (message.eventName) {
+      // XXX todo figure out how to pass a third callerApp parameter here
       case 'openFlow':
         FxAccountsUI.login(function(result) {
           this._sendContentEvent({

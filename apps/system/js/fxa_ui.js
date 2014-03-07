@@ -19,10 +19,12 @@ var FxAccountsUI = {
   },
 
   // Sign in/up flow.
-  login: function fxa_ui_login(onsuccess, onerror) {
+  // XXX callerApp is an optional third parameter, if it is present then
+  //     we pass it along to the fxa system app (via window.open params?)
+  login: function fxa_ui_login(onsuccess, onerror, callerApp) {
     this.onsuccessCb = onsuccess;
     this.onerrorCb = onerror;
-    this.loadFlow('login');
+    this.loadFlow('login', callerApp);
   },
 
   // Logout flow.
@@ -74,7 +76,21 @@ var FxAccountsUI = {
     }
     this.iframe.setAttribute('src', url);
     this.panel.appendChild(this.iframe);
+/* leaving the unresolved conflict so I can ponder it 
+<<<<<<< HEAD
+=======
+    // XXX this is not actually reliable, we should use a parameter passed into
+    //     loadFlow to tell us which app called the fxa app
+    //     maybe something like making params an object and looking for
+    //     params.callerApp == 'ftu'
+    if (FtuLauncher.isFtuRunning()) {
+      this.panel.classList.add('isFTU');
+    } else {
+      this.panel.classList.remove('isFTU');
+    }
+>>>>>>> 43e4f74... WIP commit with spots where we need to pass app name
     this.dialog.show();
+*/
   },
 
   // Method for sending the result of the FxAccounts flow to the caller app.

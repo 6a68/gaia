@@ -73,7 +73,7 @@ var FxaModuleEnterEmail = (function() {
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    FxaModuleOverlay.show(_('fxa-connecting-to-firefox'));
+    FxaModuleOverlay.show(_('fxa-connecting'));
 
     var email = this.fxaEmailInput.value;
 

@@ -134,7 +134,7 @@ var FxaModuleEnterPassword = (function() {
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    FxaModuleOverlay.show(_('fxa-authenticating'));
+    FxaModuleOverlay.show(_('fxa-connecting'));
 
     FxaModuleManager.setParam('success', true);
     FxModuleServerRequest.signIn(

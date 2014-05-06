@@ -38,9 +38,16 @@ var FxaModule = (function() {
     },
 
     showErrorResponse: function fxam_showErrorResponse(response) {
+      // special case: if a network error occurs during FTE,
+      // we show a slightly different error message
+      var resp = response;
+      if (window.name == 'isFTU' && resp == 'OFFLINE_ERROR') {
+        resp = 'CONNECTION_ERROR';
+      }
+
       FxaModuleOverlay.hide();
       LazyLoader.load('js/fxam_errors.js', function() {
-        var config = FxaModuleErrors.responseToParams(response);
+        var config = FxaModuleErrors.responseToParams(resp);
         FxaModuleErrorOverlay.show(config.title, config.message);
       });
     }

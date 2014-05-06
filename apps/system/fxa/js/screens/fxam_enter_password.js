@@ -54,7 +54,7 @@ var FxaModuleEnterPassword = (function() {
     var self = this;
     if (this.isFTU) {
       return this.showErrorResponse({
-        error: 'RESET_PASSWORD_IN_SETTINGS'
+        error: 'RESET_PASSWORD_ERROR'
       });
     }
     // Note: we don't need to pass a success callback, but we do need an errback
@@ -63,7 +63,7 @@ var FxaModuleEnterPassword = (function() {
       null,
       function on_reset_error() {
         self.showErrorResponse({
-          error: 'RESET_PASSWORD_ERROR'
+          error: 'UNKNOWN_ERROR'
         });
       }
     );

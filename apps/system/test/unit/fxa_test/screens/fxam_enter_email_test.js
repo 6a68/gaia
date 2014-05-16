@@ -39,7 +39,7 @@ var mocksHelperForEmailModule = new MocksHelper([
   'FxaModuleErrors'
 ]);
 
-mocha.globals(['FxModuleServerRequest']);
+mocha.globals(['FxModuleServerRequest', 'FxaModuleErrors']);
 
 suite('Screen: Enter email', function() {
   var realL10n;

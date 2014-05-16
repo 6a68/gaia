@@ -15,6 +15,7 @@
 var FxaModuleEnterEmail = (function() {
 
   var _ = null;
+  var localize = null;
 
   function _isEmailValid(emailEl) {
     return emailEl && emailEl.value && emailEl.validity.valid;
@@ -39,6 +40,8 @@ var FxaModuleEnterEmail = (function() {
   var Module = Object.create(FxaModule);
   Module.init = function init() {
     _ = navigator.mozL10n.get;
+    localize = navigator.mozL10n.localize;
+
 
     // Blocks the navigation until check the condition
     _enableNext(this.fxaEmailInput);
@@ -48,7 +51,28 @@ var FxaModuleEnterEmail = (function() {
     }
 
     // Cache HTML elements
-    this.importElements('fxa-email-input');
+    this.importElements(
+      'fxa-email-input',
+      'fxa-notice',
+      'fxa-terms',
+      'fxa-privacy'
+    );
+
+    // build up the TOS/PN string
+    // TODO: this works but is ugly. is innerHTML a lesser evil?
+    while (this.fxaNotice.firstChild) {
+      this.fxaNotice.removeChild(this.fxaNotice.firstChild);
+    }
+    localize(this.fxaTerms, 'fxa-terms-of-service');
+    localize(this.fxaPrivacy, 'fxa-privacy-notice');
+    var fragment = document.createDocumentFragment();
+    fragment.appendChild(document.createTextNode(_('fxa-notice-1') + ' '));
+    fragment.appendChild(this.fxaTerms);
+    fragment.appendChild(document.createTextNode(' ' + _('fxa-and') + ' '));
+    fragment.appendChild(this.fxaPrivacy);
+    fragment.appendChild(document.createTextNode(' ' + _('fxa-notice-2')));
+    this.fxaNotice.appendChild(fragment);
+
     // Add listeners
     this.fxaEmailInput.addEventListener(
       'input',

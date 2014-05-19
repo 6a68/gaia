@@ -108,7 +108,7 @@ var FxaPanel = (function fxa_panel() {
 
   function showUnverifiedPanel(email) {
     unverifiedPanel.hidden = false;
-    cancelBtn.onclick = onLogoutClick;
+    cancelBtn.onclick = onCancelClick;
     navigator.mozL10n.localize(
       unverifiedEmail,
       'fxa-verification-email-sent-msg',
@@ -116,7 +116,38 @@ var FxaPanel = (function fxa_panel() {
     );
   }
 
+  // require password to logout, otherwise find my device is pointless
+  // XXX the console.logs have been inserted to try to trace the refreshAuth
+  //     flow, which seems broken at the moment.
   function onLogoutClick(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    // we never cache the email. get it from gecko
+    fxaHelper.getAccounts(function fxam_get_accounts_cb(resp) {
+      console.error('getAccounts returned ok');
+      var email = resp && resp.email;
+      if (!email) {
+        // if no email was found, we're logged out, so bail & refresh the UI.
+        console.error('getAccounts returned but email was falsy');
+        return refreshStatus();
+      }
+      // if they are logged in, ask them to re-enter password
+      fxaHelper.refreshAuthentication(email, function fxam_refresh_auth_cb() {
+        console.error('refreshAuthentication returned ok');
+        fxaHelper.logout(onFxAccountStateChange, onFxAccountError);
+      }, function fxam_refresh_auth_error() {
+        // if they fail the challenge, let them try again, and log it.
+        // TODO do we want to disable the logout button for a period of time?
+        console.error('FxaPanel: User tried logout, failed password challenge');
+      });
+    }, function fxam_get_accounts_error(err) {
+      // if we can't get accounts, just log the error and let them try again
+      console.error('FxaPanel: Error getting Firefox Account: ' + err.error);
+    });
+  }
+
+  // canceling an unverified account doesn't require re-authing
+  function onCancelClick(e) {
     e.stopPropagation();
     e.preventDefault();
     fxaHelper.logout(onFxAccountStateChange, onFxAccountError);

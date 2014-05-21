@@ -46,6 +46,12 @@ suite('Screen: Enter email', function() {
   suiteSetup(function(done) {
     realL10n = navigator.mozL10n;
     navigator.mozL10n = MockL10n;
+    // we have to special-case the l10n stub for the fxa-notice element
+    var l10nStub = sinon.stub(navigator.mozL10n, 'get');
+    var noticeStr = 'By proceeding, I agree to the {{tos}} and {{pn}} of ' +
+                    'Firefox cloud services';
+    l10nStub.withArgs('fxa-notice')
+      .returns(noticeStr);
 
     mocksHelperForEmailModule.suiteSetup();
     // Load real HTML

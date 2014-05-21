@@ -42,6 +42,11 @@ var FxaModuleEnterEmail = (function() {
     _ = navigator.mozL10n.get;
     localize = navigator.mozL10n.localize;
 
+    // Cache static HTML elements
+    this.importElements(
+      'fxa-email-input',
+      'fxa-notice'
+    );
 
     // Blocks the navigation until check the condition
     _enableNext(this.fxaEmailInput);
@@ -50,28 +55,23 @@ var FxaModuleEnterEmail = (function() {
       return;
     }
 
-    // Cache HTML elements
-    this.importElements(
-      'fxa-email-input',
-      'fxa-notice',
-      'fxa-terms',
-      'fxa-privacy'
+    // dynamically construct and localize ToS/PN notice
+    var noticeText = _('fxa-notice');
+    var tosReplaced = noticeText.replace(
+      '{{tos}}',
+      '<a id="fxa-terms" href="#" class="disabled">Terms of Service</a>'
     );
+    var tosPnReplaced = tosReplaced.replace(
+      '{{pn}}',
+      '<a id="fxa-privacy" href="#" class="disabled">Privacy Notice</a>'
+    );
+    this.fxaNotice.innerHTML = tosPnReplaced;
 
-    // build up the TOS/PN string
-    // TODO: this works but is ugly. is innerHTML a lesser evil?
-    while (this.fxaNotice.firstChild) {
-      this.fxaNotice.removeChild(this.fxaNotice.firstChild);
-    }
-    localize(this.fxaTerms, 'fxa-terms-of-service');
-    localize(this.fxaPrivacy, 'fxa-privacy-notice');
-    var fragment = document.createDocumentFragment();
-    fragment.appendChild(document.createTextNode(_('fxa-notice-1') + ' '));
-    fragment.appendChild(this.fxaTerms);
-    fragment.appendChild(document.createTextNode(' ' + _('fxa-and') + ' '));
-    fragment.appendChild(this.fxaPrivacy);
-    fragment.appendChild(document.createTextNode(' ' + _('fxa-notice-2')));
-    this.fxaNotice.appendChild(fragment);
+    // manually import a few elements after innerHTMLing
+    this.fxaPrivacy = document.getElementById('fxa-privacy');
+    localize(this.fxaPrivacy, 'fxa-pn');
+    this.fxaTerms = document.getElementById('fxa-terms');
+    localize(this.fxaTerms, 'fxa-tos');
 
     // Add listeners
     this.fxaEmailInput.addEventListener(

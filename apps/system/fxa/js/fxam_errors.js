@@ -60,7 +60,7 @@
     var errorText = _('fxa-coppa-failure-error-message');
     var learnMore = _('fxa-learn-more');
     // concat as a string. fxam_error_overlay will innerHTML the whole message.
-    return errorText + '<a href="' + coppaLink + '">' + learnMore + '</a>';
+    return errorText + ' <a href="' + coppaLink + '">' + learnMore + '</a>';
   }
 
   var FxaModuleErrors = {

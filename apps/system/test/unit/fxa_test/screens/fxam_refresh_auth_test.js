@@ -39,7 +39,7 @@ var mocksHelperForRefreshAuthModule = new MocksHelper([
   'FxaModuleErrors'
 ]);
 
-mocha.globals(['FxModuleServerRequest']);
+mocha.globals(['FxModuleServerRequest', 'FxaModuleErrors']);
 
 suite('Screen: Enter password', function() {
   var realL10n;

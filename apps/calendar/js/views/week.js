@@ -146,11 +146,9 @@ Calendar.ns('Views').Week = (function() {
       var date = new Date();
       date.setHours(hour, 0, 0, 0);
 
-      var format = navigator.mozL10n.get('hour-week-view-sidebar', {
-        ampm: '<span class="ampm">' +
-          navigator.mozL10n.get('hour-week-view-sidebar-ampm') +
-          '</span>'
-      });
+      var format = navigator.mozL10n.get('hour-format')
+        .replace(/\s*%p\s*/, '<span class="ampm">%p</span>');
+
       var result = Calendar.App.dateFormat.localeFormat(date, format);
 
       // remove leading zero

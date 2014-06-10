@@ -130,9 +130,12 @@
 
     this.Search = {
       suggestions: function suggestions(options) {
-        return Request(this.service, 'suggestions', options);
+        return Request('Search', 'suggestions', options);
       },
       bgimage: function bgimage(options) {
+        options.width = eme.device.screen.width;
+        options.height = eme.device.screen.height;
+
         return Request('Search', 'bgimage', options);
       }
     };

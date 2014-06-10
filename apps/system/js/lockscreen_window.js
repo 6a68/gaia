@@ -38,6 +38,7 @@
     // and LockScreen.
     this.lockscreen = new window.LockScreen();
     window.lockScreen = this.lockscreen;
+    this.lockscreen.init();
   };
 
   /**
@@ -77,6 +78,8 @@
    * @memberof LockScreenWindow
    */
   LockScreenWindow.prototype.closeAnimation = 'fade-out';
+
+  LockScreenWindow.prototype._DEBUG = false;
 
   /**
    * LockScreenWindow has its own styles.
@@ -123,6 +126,9 @@
           dummy = document.createElement('div');
 
       dummy.innerHTML = html;
+      // Need to translate to render some attributes correctly (e.g.
+      // aria-label).
+      navigator.mozL10n.translate(dummy);
       var iframe = dummy.firstElementChild;
       iframe.setVisible = function() {};
       // XXX: real iframes would own these methods.

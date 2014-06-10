@@ -167,14 +167,12 @@ class GaiaData(object):
     def _get_pref(self, datatype, name):
         self.marionette.switch_to_frame()
         pref = self.marionette.execute_script("return SpecialPowers.get%sPref('%s');" % (datatype, name), special_powers=True)
-        self.apps.switch_to_displayed_app()
         return pref
 
     def _set_pref(self, datatype, name, value):
         value = json.dumps(value)
         self.marionette.switch_to_frame()
         self.marionette.execute_script("SpecialPowers.set%sPref('%s', %s);" % (datatype, name, value), special_powers=True)
-        self.apps.switch_to_displayed_app()
 
     def get_bool_pref(self, name):
         """Returns the value of a Gecko boolean pref, which is different from a Gaia setting."""
@@ -394,10 +392,6 @@ class Accessibility(object):
             'Accessibility.click.apply(Accessibility, arguments)',
             [element], special_powers=True)
 
-    def wheel(self, element, direction):
-        self.marionette.execute_script('Accessibility.wheel.apply(Accessibility, arguments)', [
-            element, direction])
-
     def get_name(self, element):
         return self.marionette.execute_async_script(
             'return Accessibility.getName.apply(Accessibility, arguments)',
@@ -569,25 +563,25 @@ class GaiaDevice(object):
 
     def touch_home_button(self):
         apps = GaiaApps(self.marionette)
-        if apps.displayed_app.name.lower() != 'homescreen':
+        if apps.displayed_app.name.lower() != 'vertical':
             # touching home button will return to homescreen
             self._dispatch_home_button_event()
             Wait(self.marionette).until(
-                lambda m: apps.displayed_app.name.lower() == 'homescreen')
+                lambda m: apps.displayed_app.name.lower() == 'vertical')
             apps.switch_to_displayed_app()
         else:
             apps.switch_to_displayed_app()
-            mode = self.marionette.find_element(By.TAG_NAME, 'body').get_attribute('data-mode')
+            mode = self.marionette.find_element(By.TAG_NAME, 'body').get_attribute('class')
             self._dispatch_home_button_event()
             apps.switch_to_displayed_app()
-            if mode == 'edit':
+            if mode == 'edit-mode':
                 # touching home button will exit edit mode
                 Wait(self.marionette).until(lambda m: m.find_element(
-                    By.TAG_NAME, 'body').get_attribute('data-mode') == 'normal')
+                    By.TAG_NAME, 'body').get_attribute('class') != mode)
             else:
-                # touching home button will move to first page
+                # touching home button inside homescreen will scroll it to the top
                 Wait(self.marionette).until(lambda m: m.execute_script(
-                    'return window.wrappedJSObject.GridManager.pageHelper.getCurrentPageNumber();') == 0)
+                    "return document.querySelector('.scrollable').scrollTop") == 0)
 
     def _dispatch_home_button_event(self):
         self.marionette.switch_to_frame()
@@ -722,12 +716,6 @@ class GaiaTestCase(MarionetteTestCase, B2GTestCaseMixin):
                 self.data_layer.set_bool_pref(name, value)
             else:
                 self.data_layer.set_char_pref(name, value)
-
-        # set homescreen origin to old homescreen - remove after migration to vertical homescreen
-        self.marionette.switch_to_frame()
-        self.data_layer.set_setting('homescreen.manifestURL', 'app://homescreen.gaiamobile.org/manifest.webapp')
-        homescreen = self.marionette.find_element(By.ID, 'homescreen')
-        Wait(self.marionette, timeout=60).until(lambda m: homescreen.get_attribute('loading-state') == 'false')
 
         # unlock
         self.device.unlock()

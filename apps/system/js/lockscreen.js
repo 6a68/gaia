@@ -12,7 +12,6 @@
 (function(exports) {
 
   var LockScreen = function() {
-    this.init();
   };
   LockScreen.prototype = {
     configs: {
@@ -460,12 +459,11 @@
     }).bind(this));
 
     window.SettingsListener.observe('wallpaper.color',
-      'hsla(73, 25%, 42%, 0.75)', (function(value) {
+      'hsla(23, 99%, 55%, 0.7)', (function(value) {
       this.maskedBackground.dataset.wallpaperColor = value;
       if (!this.maskedBackground.classList.contains('blank')) {
         this.maskedBackground.style.backgroundColor = value;
       }
-      this.passcodeCode.style.backgroundColor = value;
     }).bind(this));
 
     navigator.mozL10n.ready(this.l10nInit.bind(this));

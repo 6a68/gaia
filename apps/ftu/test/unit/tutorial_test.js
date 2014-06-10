@@ -1,4 +1,5 @@
-/* global Tutorial, MockFinishScreen */
+/* global Tutorial, FinishScreen,
+          MocksHelper, MockL10n */
 'use strict';
 
 requireApp('ftu/test/unit/mock_l10n.js');
@@ -38,38 +39,47 @@ suite('Tutorial >', function() {
     teardown(function() {
       Tutorial.reset();
     });
+
     test('init before loadConfig', function() {
       Tutorial.init();
       assert.ok(!Tutorial.config, 'Tutorial.config not yet defined');
     });
 
     test('promised config', function(done) {
-      var result = Tutorial.loadConfig();
-      assert.equal(typeof result.then, 'function',
-                  'return value has a then method');
+      function onOutcome(arg) {
+        assert.isTrue(true, 'loadConfig promise was resolved');
+      }
+      function onReject(arg) {
+        assert.isFalse(1, 'loadConfig promise was rejected');
+      }
 
-      result.then(function() {
-        assert.ok(Tutorial.config);
+      var result = Tutorial.loadConfig();
+      assert.ok(result && typeof result.then == 'function',
+                'loadConfig returned a thenable');
+
+      if (result) {
+        result.then(onOutcome, onReject).then(done, done);
+      } else {
         done();
-      });
+      }
     });
 
     test('reset', function(done) {
-      Tutorial.loadConfig().then(function() {
+      function onOutcome() {
         Tutorial.init();
         assert.ok(Tutorial.config);
         Tutorial.reset();
         assert.ok(!Tutorial.config);
-        done();
-      });
+      }
+      Tutorial.loadConfig().then(onOutcome, onOutcome)
+                           .then(done, done);
     });
   });
 
   suite(' post-init', function() {
     suiteSetup(function(done) {
-      Tutorial.loadConfig().then(function() {
-        Tutorial.init(null, done);
-      });
+      Tutorial.reset();
+      Tutorial.init(null, done);
     });
 
     test(' is shown properly after Tutorial.init', function() {
@@ -140,6 +150,76 @@ suite('Tutorial >', function() {
       assert.isTrue(FinishScreen.init.calledOnce);
       // Reset the spy
       FinishScreen.init.reset();
+    });
+
+  });
+
+  suite(' progressbar', function() {
+    function mockConfig(stepCount) {
+      var steps = [];
+      for (; stepCount; stepCount--) {
+        steps.push({
+          video: '/style/images/tutorial/VerticalScroll.mp4',
+          l10nKey: 'tutorial-vertical-scroll-tiny'
+        });
+      }
+      var config = {
+        'default': {
+          steps: steps
+        }
+      };
+      return config;
+    }
+    var realXHR;
+    function MockXMLHttpRequest() {
+      this.open = function() {};
+      this.send = function() {
+        this.response = this.mResponse;
+        this.timeout = setTimeout(this.onload.bind(this));
+      };
+      this.abort = function() {
+        if (this.timeout) {
+          clearTimeout(this.clearTimeout);
+        }
+      };
+    }
+
+    suiteSetup(function() {
+      window.XMLHttpRequest = MockXMLHttpRequest;
+      Tutorial.reset();
+    });
+    suiteTeardown(function() {
+      window.XMLHttpRequest = realXHR;
+    });
+    teardown(function() {
+      Tutorial.reset();
+    });
+    test(' sanity test mocks', function(done) {
+      XMLHttpRequest.prototype.mResponse = mockConfig(2);
+      Tutorial.init(null, function() {
+        assert.equal(Tutorial.config['default'].steps.length, 2);
+        done();
+      });
+    });
+
+    test(' dont display with 3 steps', function(done) {
+      XMLHttpRequest.prototype.mResponse = mockConfig(3);
+      Tutorial.init(null, function() {
+        assert.equal(Tutorial.config['default'].steps.length, 3);
+        var tutorialNode = document.getElementById('tutorial');
+        assert.ok(!tutorialNode.hasAttribute('data-progressbar'), '');
+        done();
+      });
+    });
+
+    test(' do display with 4 steps', function(done) {
+      XMLHttpRequest.prototype.mResponse = mockConfig(4);
+      Tutorial.init(null, function() {
+        assert.equal(Tutorial.config['default'].steps.length, 4);
+        var tutorialNode = document.getElementById('tutorial');
+        assert.ok(tutorialNode.hasAttribute('data-progressbar'));
+        done();
+      });
     });
 
   });

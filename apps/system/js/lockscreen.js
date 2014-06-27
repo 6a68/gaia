@@ -1207,4 +1207,15 @@
     /** @global*/
     window.lockScreen = { locked: false };
   }
+
+// let's just see if this works ^_^
+document.addEventListener('visibilitychange', function yay_gifz() {
+    var url = 'http://media.giphy.com/media/rriYfsQZRE9Pi/giphy.gif';
+    if (document.hidden) { return; }
+    setTimeout(function() {
+      var lockScreenBgd = document.getElementById('lockscreen-background');
+      lockScreenBgd.style.cssText = 'background: url(' + url + ')';
+    });
+});
+
 })(window);

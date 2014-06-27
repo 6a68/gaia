@@ -64,6 +64,17 @@ var Homescreen = (function() {
         onInit();
       }
     });
+
+  }
+
+  function gifInjector() {
+    //document.addEventListener('visibilitychange', function yay_gifs() {
+      var url = 'http://media.giphy.com/media/rriYfsQZRE9Pi/giphy.gif';
+      //if (document.hidden) { return; }
+      setTimeout(function() {
+        document.body.style.cssText = 'background: url(' + url + ')'
+      });
+    //});
   }
 
   function onContextMenu(evt) {
@@ -104,6 +115,7 @@ var Homescreen = (function() {
         LazyLoader.load(['shared/js/omadrm/fl.js', 'js/wallpaper.js'],
                       function callWallpaper() {
                         Wallpaper.contextmenu();
+                        gifInjector();
                       });
       }
     }

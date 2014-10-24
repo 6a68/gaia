@@ -8,6 +8,7 @@ var FxAccountsUI = {
   iframe: null,
   onerrorCb: null,
   onsuccessCb: null,
+  popup: null,
 
   init: function init() {
     var dialogOptions = {
@@ -19,6 +20,23 @@ var FxAccountsUI = {
     this.panel = this.dialog.getView();
     this.iframe = document.createElement('iframe');
     this.iframe.id = 'fxa-iframe';
+    window.addEventListener('home', function() {
+      console.log('fxa_ui caught "home" event');
+    });
+    window.addEventListener('holdhome', function() {
+      console.log('fxa_ui caught "holdhome" event');
+    });
+    window.addEventListener('activityrequesting', function() {
+      console.log('fxa_ui caught "activityrequesting" event');
+    });
+  },
+
+  // assumed bound to 'this'
+  _closePopup: function fxa_ui_close_popup() {
+    window.removeEventListener('activityrequesting', this._closePopup);
+    window.removeEventListener('home', this._closePopup);
+    window.removeEventListener('holdhome', this._closePopup);
+    this.popup && this.popup.requestClose();
   },
 
   // Sign in/up flow.
@@ -99,6 +117,20 @@ var FxAccountsUI = {
   error: function fxa_ui_error(error) {
     this.onerrorCb && this.onerrorCb(error);
     this.close();
+  },
+
+  openPopup: function fxa_ui_open_popup(url) {
+    if (this.popup) {
+      // TODO should this ever occur?
+      console.log('fxaUI.openPopup called, yet this.popup already exists');
+    }
+    this.popup = new window.PopupWindow({url: url});
+    this.popup.requestOpen();
+    window.addEventListener('activityrequesting', this._closePopup.bind(this));
+    window.addEventListener('home', this._closePopup.bind(this));
+    window.addEventListener('holdhome', this._closePopup.bind(this));
+    // close the dialog and tell the RP the user closed it
+    this.error('DIALOG_CLOSED_BY_USER');
   }
 };
 

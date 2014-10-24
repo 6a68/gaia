@@ -49,6 +49,9 @@ var FxaModuleManager = {
       return;
     }
     window.parent.FxAccountsUI.done(this.paramsRetrieved);
+  },
+  openPopup: function fxamm_open_popup(url) {
+    window.parent.FxAccountsUI.openPopup(url);
   }
 };
 

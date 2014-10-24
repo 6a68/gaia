@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-/* global SettingsHelper, FxaModuleManager, MozActivity */
+/* global FxaModuleManager, SettingsHelper */
 
 'use strict';
 
@@ -11,14 +11,6 @@
  */
 
 (function(exports) {
-
-  var pref = 'identity.fxaccounts.reset-password.url';
-  var fxaSettingsHelper = SettingsHelper(pref);
-  var fxaURL;
-
-  fxaSettingsHelper.get(function on_fxa_get_settings(url) {
-    fxaURL = url;
-  });
 
   function _setAccountDetails(response) {
     if(response && response.user && response.user.email) {
@@ -31,6 +23,11 @@
     window.parent.LazyLoader.load('../js/fxa_client.js', function() {
       callback && callback();
     });
+  }
+
+  function _loadExternalURL(url, isFTU, onerror) {
+    // TODO - how to handle onerror?
+    FxaModuleManager.openPopup(url);
   }
 
   var FxModuleServerRequest = {
@@ -81,26 +78,31 @@
       });
     },
     requestPasswordReset:
-      function fxmsr_requestPasswordReset(email, onsuccess, onerror) {
-      var url = email ? fxaURL + '?email=' + email : fxaURL;
-      var activity = new MozActivity({
-        name: 'view',
-        data: {
-          type: 'url',
-          url: url
+      function fxmsr_requestPasswordReset(email, isFTU, onerror) {
+      var pref = 'identity.fxaccounts.reset-password.url';
+      SettingsHelper(pref).get(function(url) {
+        if (!url) {
+          return console.error('Failed to load ' + pref);
         }
+        if (email) {
+          url += '?email=' + email;
+        }
+        _loadExternalURL(url, isFTU, onerror);
       });
-      activity.onsuccess = function on_reset_success() {
-        // TODO When the browser loads, it is *behind* the system app. So we
-        //      need to dismiss this app in order to let the user reset their
-        //      password.
-        onsuccess && onsuccess();
-        FxaModuleManager.close();
-      };
-      activity.onerror = function on_reset_error(err) {
-        console.error(err);
-        onerror && onerror(err);
-      };
+    },
+    loadTermsURL: function fxmsr_loadTermsURL(isFTU) {
+      var pref = 'identity.fxaccounts.terms.url';
+      SettingsHelper(pref).get(function(url) {
+        url ? _loadExternalURL(url, isFTU) :
+          console.error('Failed to load ' + pref);
+      });
+    },
+    loadPrivacyURL: function fxmsr_loadPrivacyURL(isFTU) {
+      var pref = 'identity.fxaccounts.privacy.url';
+      SettingsHelper(pref).get(function(url) {
+        url ? _loadExternalURL(url, isFTU) :
+          console.error('Failed to load ' + pref);
+      });
     }
   };
   exports.FxModuleServerRequest = FxModuleServerRequest;

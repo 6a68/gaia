@@ -12,14 +12,6 @@
 
 (function(exports) {
 
-  var pref = 'identity.fxaccounts.reset-password.url';
-  var fxaSettingsHelper = SettingsHelper(pref);
-  var fxaURL;
-
-  fxaSettingsHelper.get(function on_fxa_get_settings(url) {
-    fxaURL = url;
-  });
-
   function _setAccountDetails(response) {
     if(response && response.user && response.user.email) {
       FxaModuleManager.setParam('done', true);
@@ -31,6 +23,26 @@
     window.parent.LazyLoader.load('../js/fxa_client.js', function() {
       callback && callback();
     });
+  }
+
+  function _loadExternalURL(url, onerror) {
+    var activity = new MozActivity({
+      name: 'view',
+      data: {
+        type: 'url',
+        url: url
+      }
+    });
+    activity.onsuccess = function on_load_external_link_success() {
+      // When the browser loads, it is *behind* the system app. So we
+      // need to dismiss this app in order to let the user reset their
+      // password or view the privacy/terms-of-service pages.
+      FxaModuleManager.close();
+    };
+    activity.onerror = function on_load_external_link_error(err) {
+      console.error(err);
+      onerror && onerror(err);
+    };
   }
 
   var FxModuleServerRequest = {
@@ -81,26 +93,29 @@
       });
     },
     requestPasswordReset:
-      function fxmsr_requestPasswordReset(email, onsuccess, onerror) {
-      var url = email ? fxaURL + '?email=' + email : fxaURL;
-      var activity = new MozActivity({
-        name: 'view',
-        data: {
-          type: 'url',
-          url: url
+      function fxmsr_requestPasswordReset(email, onerror) {
+      var pref = 'identity.fxaccounts.reset-password.url';
+      SettingsHelper(pref).get(function(url) {
+        if (!url) {
+          return console.error('Failed to load ' + pref);
         }
+        if (email) {
+          url += '?email=' + email;
+        }
+        _loadExternalURL(url, onerror);
       });
-      activity.onsuccess = function on_reset_success() {
-        // TODO When the browser loads, it is *behind* the system app. So we
-        //      need to dismiss this app in order to let the user reset their
-        //      password.
-        onsuccess && onsuccess();
-        FxaModuleManager.close();
-      };
-      activity.onerror = function on_reset_error(err) {
-        console.error(err);
-        onerror && onerror(err);
-      };
+    },
+    loadTermsURL: function fxmsr_loadTermsURL() {
+      var pref = 'identity.fxaccounts.terms.url';
+      SettingsHelper(pref).get(function(url) {
+        url ? _loadExternalURL(url) : console.error('Failed to load ' + pref);
+      });
+    },
+    loadPrivacyURL: function fxmsr_loadPrivacyURL() {
+      var pref = 'identity.fxaccounts.privacy.url';
+      SettingsHelper(pref).get(function(url) {
+        url ? _loadExternalURL(url) : console.error('Failed to load ' + pref);
+      });
     }
   };
   exports.FxModuleServerRequest = FxModuleServerRequest;

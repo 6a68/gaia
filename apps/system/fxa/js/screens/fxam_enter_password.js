@@ -60,7 +60,6 @@ var FxaModuleEnterPassword = (function() {
     // Note: we don't need to pass a success callback, but we do need an errback
     FxModuleServerRequest.requestPasswordReset(
       this.email,
-      null,
       function on_reset_error() {
         self.showErrorResponse({
           error: 'UNKNOWN_ERROR'

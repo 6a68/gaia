@@ -28,6 +28,7 @@ suite('Find My Device panel > ', function() {
   var realL10n, realLoadJSON, subject;
   var signinSection, settingsSection, trackingSection, login, loginButton,
       checkbox, unverifiedError;
+  var runHeaderFontFitSpy;
 
   mocksForFindMyDevice.attachTestHelpers();
 
@@ -98,12 +99,20 @@ suite('Find My Device panel > ', function() {
       // manually enable the loginButton
       loginButton.removeAttribute('disabled');
 
-      require('/js/findmydevice.js', function() {
+      requireApp('settings/js/findmydevice.js', function() {
+        runHeaderFontFitSpy = sinon.spy();
+        var mockSettingsUtils = {
+          runHeaderFontFit: runHeaderFontFitSpy
+        };
         subject = FindMyDevice;
-        subject.init();
+        subject.init(mockSettingsUtils);
         done();
       });
     });
+  });
+
+  test('ensure font fit was called during initialization', function() {
+    assert.isTrue(runHeaderFontFitSpy.calledOnce);
   });
 
   test('prompt for login when logged out of FxA', function() {

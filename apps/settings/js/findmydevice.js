@@ -14,9 +14,16 @@ var FindMyDevice = {
   _interactiveLogin: false,
   _loginButton: null,
 
-  init: function fmd_init() {
+  // settingsUtils is used by unit tests to pass in a mock
+  init: function fmd_init(settingsUtils) {
     var self = this;
     self._loginButton = document.querySelector('#findmydevice-login > button');
+
+    // The app name may overflow the header width in some locales; try to
+    // shrink it. Bug 1087441
+    var header = document.querySelector('#findmydevice gaia-header');
+    var SettingsUtils = settingsUtils || require('modules/settings_utils');
+    SettingsUtils.runHeaderFontFit(header);
 
     loadJSON('/resources/findmydevice.json', function(data) {
       SettingsListener.observe('findmydevice.logged-in', false,

@@ -1,56 +1,62 @@
-/* global MocksHelper */
-/* global MockLoadJSON */
-/* global HtmlImports */
-/* global FindMyDevice */
-/* global MockSettingsListener */
-/* global MockSettingsHelper */
-/* global IAC_API_WAKEUP_REASON_TRY_DISABLE */
+/* globals FindMyDevice, IAC_API_WAKEUP_REASON_TRY_DISABLE, loadBodyHTML,
+  MockSettingsListener, MockSettingsHelper, MocksHelper */
 
 'use strict';
 
-require('mock_load_json.js');
+requireApp('settings/shared/test/unit/load_body_html_helper.js');
 
-// require helpers for managing html
-require('/shared/test/unit/load_body_html_helper.js');
-require('/shared/js/html_imports.js');
-
+// old-style requires unfortunately are handled separately
 require('/shared/test/unit/mocks/mocks_helper.js');
 require('/shared/test/unit/mocks/mock_settings_listener.js');
 require('/shared/test/unit/mocks/mock_settings_helper.js');
 require('/shared/js/findmydevice_iac_api.js');
 
-var mocksForFindMyDevice = new MocksHelper([
+var fmdMocks = new MocksHelper([
   'SettingsListener', 'SettingsHelper'
 ]).init();
 
 suite('Find My Device panel > ', function() {
-  var MockMozId, realMozId;
-  var realL10n, realLoadJSON, subject;
-  var signinSection, settingsSection, trackingSection, login, loginButton,
-      checkbox, unverifiedError;
-  var runHeaderFontFitSpy;
 
-  mocksForFindMyDevice.attachTestHelpers();
+  var realL10n, realMozId, MockMozId, MockSettingsUtils, realLoadJSON,
+    readyCtx,signinSection, settingsSection, trackingSection, checkbox,
+    login,loginButton, unverifiedError;
 
-  setup(function(done) {
-    realL10n = navigator.mozL10n;
-    navigator.mozL10n = {
-      once: function(callback) {
-        // XXX(ggp) we'll manually init() below, so we don't
-        // need to call the callback now.
-      },
-      setAttributes: function(element, id) {
-      },
+  fmdMocks.attachTestHelpers();
+
+  var modules = [
+    'shared_mocks/mock_l10n',
+    'mocks/mock_mozId',
+    'unit/mock_load_json'
+  ];
+
+  var map = {
+    '*': {
+      'mocks/mock_mozId': 'MockMozId',
+      'modules/settings_utils': 'MockSettingsUtils'
+    }
+  };
+
+  suiteSetup(function(done) {
+    // create a new requirejs context
+    var requireCtx = testRequire([], map, function() {});
+
+    // next, load the bare minimum html.
+    loadBodyHTML('_findmydevice.html');
+
+    // create a few mocks inline
+    MockSettingsUtils = {
+      runHeaderFontFit: function() {}
     };
+    define('MockSettingsUtils', function() {
+      return MockSettingsUtils;
+    });
 
-    realMozId = navigator.mozId;
     MockMozId = {
       onlogin: null,
       onlogout: null,
       onready: null,
       onerror: null,
       oncancel: null,
-
       watch: function(options) {
         this.onlogin = options.onlogin;
         this.onlogout = options.onlogout;
@@ -61,58 +67,58 @@ suite('Find My Device panel > ', function() {
           options.onready();
         });
       },
-
       request: function(options) {
         this.oncancel = options.oncancel;
-      },
-    };
-
-    navigator.mozId = MockMozId;
-
-    realLoadJSON = window.loadJSON;
-    window.loadJSON = MockLoadJSON.loadJSON;
-
-    // first, load settings app
-    loadBodyHTML('/index.html');
-
-    // next, insert fmd panel into page
-    var importHook = document.createElement('link');
-    importHook.setAttribute('rel', 'import');
-    importHook.setAttribute('href', '/elements/findmydevice.html');
-    document.head.appendChild(importHook);
-    HtmlImports.populate(function onDOMReady() {
-      // double-check panel is ready
-      if (document.getElementById('findmydevice-signin') == null) {
-        throw new Error('failed to load findmydevice panel into page');
       }
+    };
+    define('MockMozId', function() {
+      return MockMozId;
+    });
 
-      // grab pointers to useful elements
-      signinSection = document.getElementById('findmydevice-signin');
-      settingsSection = document.getElementById('findmydevice-settings');
-      trackingSection = document.getElementById('findmydevice-tracking');
-      checkbox = document.querySelector('#findmydevice-enabled input');
-      login = document.getElementById('findmydevice-login');
-      loginButton = document.querySelector('#findmydevice-login > button');
-      unverifiedError = document.getElementById(
-        'findmydevice-fxa-unverified-error');
+    // double-check panel is ready
+    if (document.getElementById('findmydevice-signin') == null) {
+      throw new Error('failed to load findmydevice panel into page');
+    }
+    // grab pointers to useful elements
+    signinSection = document.getElementById('findmydevice-signin');
+    settingsSection = document.getElementById('findmydevice-settings');
+    trackingSection = document.getElementById('findmydevice-tracking');
+    checkbox = document.querySelector('#findmydevice-enabled input');
+    login = document.getElementById('findmydevice-login');
+    loginButton = document.querySelector('#findmydevice-login > button');
+    unverifiedError = document.getElementById(
+      'findmydevice-fxa-unverified-error');
 
-      // manually enable the loginButton
-      loginButton.removeAttribute('disabled');
+    // manually enable the loginButton
+    loginButton.removeAttribute('disabled');
 
-      requireApp('settings/js/findmydevice.js', function() {
-        runHeaderFontFitSpy = sinon.spy();
-        var mockSettingsUtils = {
-          runHeaderFontFit: runHeaderFontFitSpy
-        };
-        subject = FindMyDevice;
-        subject.init(mockSettingsUtils);
-        done();
-      });
+
+    // actually load all the files, swap out real for fakes, and start the
+    // tests
+    readyCtx = requireCtx(modules, function(MockL10n, MockMozId, MockLoadJSON) {
+      realL10n = window.navigator.mozL10n;
+      window.navigator.mozL10n = MockL10n;
+
+      realLoadJSON = window.loadJSON;
+      window.loadJSON = MockLoadJSON.loadJSON;
+
+      realMozId = navigator.mozId;
+      window.navigator.mozId = MockMozId;
+
+      loadFMD(readyCtx, done);
     });
   });
 
-  test('ensure font fit was called during initialization', function() {
-    assert.isTrue(runHeaderFontFitSpy.calledOnce);
+  function loadFMD(ctx, cb) {
+    ctx(['findmydevice'], function(FindMyDevice) {
+      cb();
+    });
+  }
+
+  suiteTeardown(function() {
+    navigator.mozL10n = realL10n;
+    navigator.mozId = realMozId;
+    window.loadJSON = realLoadJSON;
   });
 
   test('prompt for login when logged out of FxA', function() {
@@ -276,11 +282,5 @@ suite('Find My Device panel > ', function() {
     MockMozId.onlogout();
     assert.isTrue(unverifiedError.hidden);
     assert.isFalse(login.hidden);
-  });
-
-  teardown(function() {
-    navigator.mozL10n = realL10n;
-    navigator.mozId = realMozId;
-    window.loadJSON = realLoadJSON;
   });
 });

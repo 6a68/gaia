@@ -6,8 +6,7 @@
 
 'use strict';
 
-
-define(['modules/settings_utils'], function(SettingsUtils) {
+require(['modules/settings_utils'], function(SettingsUtils) {
   var FindMyDevice = {
     // When the FxA login callback is called, we need to know if the
     // login process began with the user clicking our login button
@@ -166,6 +165,6 @@ define(['modules/settings_utils'], function(SettingsUtils) {
     },
   };
 
-  window.FindMyDevice = FindMyDevice;
-  window.navigator.mozL10n.once(FindMyDevice.init.bind(FindMyDevice));
-});
+  navigator.mozL10n.once(FindMyDevice.init.bind(FindMyDevice));
+  this.FindMyDevice = FindMyDevice;
+}.call(window));

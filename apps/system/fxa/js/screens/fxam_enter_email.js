@@ -84,6 +84,8 @@ var FxaModuleEnterEmail = (function() {
 
     this.isFTU = !!(options && options.isftu);
 
+    this.isFTU = !!(options && options.isftu);
+
     // Add listeners
     this.fxaEmailInput.addEventListener(
       'input',
